@@ -65,5 +65,9 @@ public class MessageService {
     public void deleteMessage(Integer id) {
         messageRepository.deleteById(id);
     }
+
+    public List<Message> getMessagesBetween(Integer from, Integer to) {
+        return messageRepository.findByFromIdAndToIdOrFromIdAndToId(from, to, to, from);
+    }
 }
 

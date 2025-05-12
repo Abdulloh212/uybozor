@@ -12,8 +12,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/category")
 public class CategoryController {
-    @GetMapping
-    public HttpEntity<?> category() {
-        return ResponseEntity.ok(List.of(Category.HOUSE,Category.APARTAMENT,Category.LAND));
-    }
+        @GetMapping
+        public HttpEntity<?> category() {
+            return ResponseEntity.ok(List.of(Category.HOUSE,Category.APARTAMENT,Category.LAND));
+        }
 }

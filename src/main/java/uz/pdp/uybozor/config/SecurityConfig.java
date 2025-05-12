@@ -46,13 +46,18 @@ public class SecurityConfig {
                                 "/api/verify-code"
                         ).permitAll()
                         .requestMatchers(
+                                "/api/user/**",
+                                "/api/user",
                                 "/api/post/**",
+                                "/api/post",
+                                "/api/like",
                                 "/api/review/**",
                                 "/api/message/**",
                                 "/api/report/**",
                                 "/api/category",
-                                "/api/status"
-                        ).authenticated()
+                                "/api/status",
+                                "/api/location"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(customUserDetailsService)

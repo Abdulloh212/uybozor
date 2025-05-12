@@ -1,12 +1,17 @@
 package uz.pdp.uybozor.controllers;
 
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import uz.pdp.uybozor.entities.Attachment;
 import uz.pdp.uybozor.entities.AttachmentContent;
+import uz.pdp.uybozor.entities.Users;
 import uz.pdp.uybozor.repo.AttachmentContentRepository;
 import uz.pdp.uybozor.repo.AttachmentRepository;
+import uz.pdp.uybozor.servises.JwtService;
 
 import java.io.IOException;
 
@@ -16,12 +21,13 @@ public class AttachmentController {
 
     private final AttachmentRepository attachmentRepository;
     private final AttachmentContentRepository attachmentContentRepository;
+    private final JwtService jwtService;
 
-    public AttachmentController(AttachmentRepository attachmentRepository, AttachmentContentRepository attachmentContentRepository) {
+    public AttachmentController(AttachmentRepository attachmentRepository, AttachmentContentRepository attachmentContentRepository, JwtService jwtService) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentContentRepository = attachmentContentRepository;
+        this.jwtService = jwtService;
     }
-
     @PostMapping
     public Integer upload(@RequestParam MultipartFile file) throws IOException {
      Attachment attachment = Attachment.builder()
@@ -46,5 +52,4 @@ public class AttachmentController {
     }
 
 
-}
-
+    }

@@ -34,17 +34,6 @@
       background-color: #4e0fdc;
     }
 
-    .btn-outline-primary {
-      border-radius: 10px;
-      transition: all 0.3s ease-in-out;
-    }
-
-    .btn-outline-primary:hover {
-      background-color: #4e0fdc;
-      color: white;
-      border-color: #4e0fdc;
-    }
-
     .error-text {
       color: red;
       font-size: 14px;
@@ -65,60 +54,52 @@
     <div class="mb-3">
       <label class="form-label">Email</label>
       <input type="email" id="login-email" class="form-control" required placeholder="example@mail.com">
-      <span class="error-text" id="login-email-error">Invalid email format</span>
     </div>
 
     <div class="mb-3">
       <label class="form-label">Password</label>
       <input type="password" id="login-password" class="form-control" required placeholder="Enter your password">
-      <span class="error-text" id="login-password-error">Password must be at least 6 characters</span>
     </div>
 
     <button type="submit" class="btn btn-primary w-100">Login</button>
 
-    <div id="login-error" class="text-danger mt-3 text-center" style="display: none;">Login failed. Please try again.</div>
+    <div id="login-error" class="text-danger mt-3 text-center" style="display: none;">
+      Login failed. Please try again.
+    </div>
   </form>
 
   <div class="text-center mt-3">
-    <button class="btn btn-link small-link" id="forgot-password">Forgot Password?</button>
+    <a href="gmailsend.html" class="btn btn-link small-link">Forgot Password?</a>
   </div>
 
   <div class="text-center mt-2">
     <span class="small-link">Don't have an account?</span><br>
-    <button class="btn btn-outline-primary mt-2 w-100" id="register-btn">Register</button>
+    <a href="register.html" class="btn btn-outline-primary mt-2 w-100">Register</a>
   </div>
 </div>
 
 <script>
-  function handleLogin(event) {
+  async function handleLogin(event) {
     event.preventDefault();
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value.trim();
-    resetErrors();
 
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
 
-    axios.post('http://localhost:8080/api/login', { email, password })
-            .then(res => {
-              localStorage.setItem('token', res.data);
-              window.location.href = `main.html`;
-            })
-            .catch(() => {
-              document.getElementById('login-error').style.display = 'block';
-            });
+    try {
+      const response = await axios.post('http://localhost:8080/api/login', {
+        email,
+        password
+      });
+
+      let token = response.data;
+      console.log(token)
+      localStorage.setItem('token',  token);
+
+      window.location.href = 'main.html';
+    } catch (error) {
+      document.getElementById('login-error').style.display = 'block';
+    }
   }
-
-  function resetErrors() {
-    document.querySelectorAll('.error-text').forEach(el => el.style.display = 'none');
-    document.getElementById('login-error').style.display = 'none';
-  }
-
-  document.getElementById('forgot-password').addEventListener('click', function () {
-    window.location.href = 'gmailsend.html';
-  });
-
-  document.getElementById('register-btn').addEventListener('click', function () {
-    window.location.href = 'register.html';
-  });
 </script>
 
 </body>

@@ -42,8 +42,8 @@ public class MyFilter extends OncePerRequestFilter {
             return;
         }
 
-        String email = jwtService.getUsernameFromToken(token);
-        Optional<Users> userOptional = usersRepository.findByEmail(email);
+        Users email = jwtService.getUserFromToken(token);
+        Optional<Users> userOptional = usersRepository.findByEmail(email.getEmail());
         if (userOptional.isEmpty()) {
             filterChain.doFilter(request, response);
             return;

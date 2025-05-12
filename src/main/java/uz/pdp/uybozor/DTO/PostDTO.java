@@ -15,8 +15,8 @@ public class PostDTO {
      String description;
      List<Integer> photoIds;
      Category category;
-     Status status;
      Double longitude;
      Double latitude;
+     Status status;
 }
 

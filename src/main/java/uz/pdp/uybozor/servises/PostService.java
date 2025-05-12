@@ -1,6 +1,9 @@
 package uz.pdp.uybozor.servises;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uz.pdp.uybozor.DTO.PostDTO;
 import uz.pdp.uybozor.entities.*;
@@ -35,7 +38,7 @@ public class PostService {
         post.setDescription(dto.getDescription());
         post.setPhotos(photos);
         post.setCategory(dto.getCategory());
-        post.setStatus(dto.getStatus());
+        post.setStatus(Status.ACTIVE);
         post.setDate(new Date());
 
         Location location = new Location();
@@ -46,7 +49,13 @@ public class PostService {
 
         post.setLocation(location);
 
-        return postRepository.save(post);
+        Post save = postRepository.save(post);
+        Users byId = usersRepository.getById(dto.getAuthorId());
+        List<Post> ownPosts = byId.getOwnPosts();
+        ownPosts.add(save);
+        byId.setOwnPosts(ownPosts);
+        usersRepository.save(byId);
+        return save;
     }
 
     public List<Post> getAllPosts() {
@@ -84,6 +93,10 @@ public class PostService {
 
     public void deletePost(Integer id) {
         postRepository.deleteById(id);
+    }
+
+    public Page<Post> findPosts(Specification<Post> spec, Pageable pageable) {
+        return postRepository.findAll(spec, pageable);
     }
 }
 

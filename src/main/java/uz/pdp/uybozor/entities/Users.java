@@ -26,7 +26,7 @@ public class Users extends BaseEntity implements UserDetails {
       private List<Post>OwnPosts;
       @ManyToOne
       private Attachment photo;
-      @ManyToMany(cascade = CascadeType.ALL)
+      @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
       private List<Role>roles;
 
 
