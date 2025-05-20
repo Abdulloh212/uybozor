@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Tafsiloti</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .chat-box {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-message {
+            margin-bottom: 8px;
+        }
+        .chat-time {
+            font-size: 0.75rem;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div id="postContainer"></div>
+</div>
+
+<!-- Qo‘ng‘iroq modal -->
+<div class="modal fade" id="callModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aloqa raqami</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="callPhone"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+
+    const loadPostDetails = async () => {
+        try {
+            const { data: post } = await axios.get(`http://localhost:8080/api/post/${postId}`);
+
+            let photos = post.photos.map(photoId => `<img src="http://localhost:8080/api/file/${photoId}" class="img-fluid mb-2">`).join('');
+            let mapHtml = `<div id="map" style="height: 300px;"></div>`;
+
+            document.getElementById('postContainer').innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h3>${post.title}</h3>
+                    <div class="row">
+                        <div class="col-md-6">${photos}</div>
+                        <div class="col-md-6">
+                            <p><strong>Narxi:</strong> ${post.sum}</p>
+                            <p><strong>Status:</strong> ${post.status.toString()}</p>
+                            <p><strong>Hudud:</strong> ${post.locationOnTxt}</p>
+                            <p><strong>Kategoriya:</strong> ${post.category.toString()}</p>
+                            <p><strong>Tavsif:</strong> ${post.description}</p>
+                            <p><strong>Muallif:</strong> ${post.author.nickname}</p>
+                            <button class="btn btn-success me-2" id="messageBtn">Yozish</button>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#callModal" onclick="document.getElementById('callPhone').innerText='${post.author.phoneNumber}'">Qo‘ng‘iroq qilish</button>
+                        </div>
+                    </div>
+                    <div class="mt-4">${mapHtml}</div>
+                    <div class="mt-4">
+                        <h5>Sharhlar</h5>
+                        <div class="chat-box" id="reviewList"></div>
+                        <div class="input-group">
+                            <input type="text" id="reviewInput" class="form-control" placeholder="Sharh yozing...">
+                            <button class="btn btn-primary" id="sendReviewBtn">Yuborish</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+            // Xarita
+            const map = L.map('map').setView([post.location.latitude, post.location.longitude], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+            L.marker([post.location.latitude, post.location.longitude]).addTo(map)
+                .bindPopup(post.locationOnTxt).openPopup();
+
+            // Sharhlar
+            let reviews = post.reviews.map(r => `
+            <div class="chat-message">
+                <strong>${r.user.nickname}</strong>: ${r.text}<br>
+                <span class="chat-time">${new Date(r.createdAt).toLocaleString()}</span>
+            </div>
+        `).join('');
+            document.getElementById('reviewList').innerHTML = reviews;
+
+        } catch (err) {
+            console.error('Postni olishda xato:', err);
+        }
+    };
+
+    loadPostDetails();
+
+    // Yozish tugmasi
+    document.addEventListener('click', function (e) {
+        if (e.target.id === 'messageBtn') {
+            alert("Tez orada...");
+        }
+    });
+
+    // Sharh yuborish
+    document.addEventListener('click', async function (e) {
+        if (e.target.id === 'sendReviewBtn') {
+            const input = document.getElementById('reviewInput');
+            const text = input.value.trim();
+            if (!text) return alert('Iltimos, sharh yozing.');
+
+            try {
+                await axios.post(`http://localhost:8080/api/review`, {
+                    text,
+                    postId
+                }, {
+                    headers: { 'Authorization': token }
+                });
+
+                input.value = '';
+                await loadPostDetails();
+            } catch (err) {
+                alert('Sharh yuborishda xato.');
+            }
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

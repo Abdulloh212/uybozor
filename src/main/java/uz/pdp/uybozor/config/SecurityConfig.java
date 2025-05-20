@@ -43,7 +43,9 @@ public class SecurityConfig {
                                 "/api/login",
                                 "/api/file",
                                 "/api/send-code",
-                                "/api/verify-code"
+                                "http://localhost:8080/swagger-ui.html",
+                                "/api/verify-code",
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(
                                 "/api/user/**",
@@ -51,6 +53,9 @@ public class SecurityConfig {
                                 "/api/post/**",
                                 "/api/post",
                                 "/api/like",
+                                "/api/getLiked",
+                                "/api/unlike",
+                                "/api/file/many",
                                 "/api/review/**",
                                 "/api/message/**",
                                 "/api/report/**",

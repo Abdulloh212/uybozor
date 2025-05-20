@@ -80,7 +80,7 @@
     // 2) Initialize map
     const map = L.map('map').setView([41.2995,69.2401],13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
+        attribution: '© OpenStreetMap'
     }).addTo(map);
     let marker;
     map.on('click', e=>{
@@ -126,27 +126,41 @@
                 alert('Foydalanuvchi yuklanmadi, birozdan soʻng urinib koʻring');
                 return;
             }
-            // upload photos, collect IDs
+            // Upload all photos at once to /api/file/many
             const photoIds = [];
-            for(let file of document.getElementById('photos').files){
-                const fd = new FormData();
-                fd.append('photo',file);
+            const files = document.getElementById('photos').files;
+            if (files.length > 0) {
+                const formData = new FormData();
+                Array.from(files).forEach(file => {
+                    formData.append('files', file); // Backenddagi "files" parametriga moslashtirildi
+                });
                 try {
                     const { data } = await axios.post(
-                        'http://localhost:8080/api/file', fd,
-                        { headers:{ ...authHeader, 'Content-Type':'multipart/form-data' } }
+                        'http://localhost:8080/api/file/many',
+                        formData,
+                        {
+                            headers: {
+                                ...authHeader,
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        }
                     );
-                    photoIds.push(data);
-                } catch(err){
-                    console.error('Photo upload error',err);
+                    photoIds.push(...data); // Backend List<Integer> qaytaradi
+                    console.log('Yuklangan rasm ID lari:', photoIds);
+                } catch(err) {
+                    console.error('Rasm yuklash xatosi:', err.response?.status, err.message);
+                    alert('Rasm yuklashda xato yuz berdi');
+                    return;
                 }
             }
-            // parse location
+
+            // Parse location
             let {lat=0,lng=0} = {};
             try {
                 ({lat,lng} = JSON.parse(document.getElementById('locationId').value));
             } catch{}
-            // build postData
+
+            // Build postData
             const postData = {
                 title: document.getElementById('title').value,
                 sum: +document.getElementById('sum').value,
@@ -156,17 +170,18 @@
                 photoIds: photoIds,
                 latitude: lat,
                 longitude: lng,
-                authorId:authorId
+                authorId: authorId
             };
-            // send
+
+            // Send post
             try {
                 await axios.post('http://localhost:8080/api/post', postData, {
-                    headers:{ ...authHeader }
+                    headers: { ...authHeader }
                 });
                 alert('Post yaratildi');
-                location.href='main.html';
-            } catch(err){
-                console.error('Post create error',err);
+                location.href = 'main.html';
+            } catch(err) {
+                console.error('Post yaratish xatosi:', err.response?.status, err.message);
                 alert('Post yaratishda xato');
             }
         });

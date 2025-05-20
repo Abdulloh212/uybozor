@@ -35,23 +35,17 @@ public class UserController {
             Users usernameFromToken = jwtService.getUserFromToken(token);
             List<Integer> liked = new ArrayList<>();
             if (usernameFromToken.getLikedPosts() != null) {
-            for (Post likedPost : usernameFromToken.getLikedPosts()) {
-                liked.add(likedPost.getId());
+            for (Integer likedPost : usernameFromToken.getLikedPosts()) {
+                liked.add(likedPost);
             }
             }
             List<Integer> own = new ArrayList<>();
-            if (usernameFromToken.getOwnPosts() != null) {
-            for (Post ownposts : usernameFromToken.getOwnPosts()) {
-                own.add(ownposts.getId());
-            }
-            }
             UserDTO userDTO = new UserDTO(
                     usernameFromToken.getId(),
                     usernameFromToken.getNickname(),
                     usernameFromToken.getTelephone(),
                     usernameFromToken.getEmail(),
                     liked,
-                    own,
                     usernameFromToken.getPhoto().getId()
             );
             return ResponseEntity.ok(userDTO);
@@ -64,12 +58,8 @@ public class UserController {
     public HttpEntity<?> get(@RequestBody Integer id) {
         Users users = usersRepository.findById(id).get();
         List<Integer> liked = new ArrayList<>();
-        for (Post likedPost : users.getLikedPosts()) {
-            liked.add(likedPost.getId());
-        }
-        List<Integer> own = new ArrayList<>();
-        for (Post ownposts : users.getOwnPosts()) {
-            own.add(ownposts.getId());
+        for (Integer likedPost : users.getLikedPosts()) {
+            liked.add(likedPost);
         }
         UserDTO userDTO = new UserDTO(
                 users.getId(),
@@ -77,7 +67,6 @@ public class UserController {
                 users.getTelephone(),
                 users.getEmail(),
                 liked,
-                own,
                 users.getPhoto().getId()
         );
         return ResponseEntity.ok(userDTO);

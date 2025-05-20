@@ -1,5 +1,6 @@
 package uz.pdp.uybozor.servises;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,11 +51,6 @@ public class PostService {
         post.setLocation(location);
 
         Post save = postRepository.save(post);
-        Users byId = usersRepository.getById(dto.getAuthorId());
-        List<Post> ownPosts = byId.getOwnPosts();
-        ownPosts.add(save);
-        byId.setOwnPosts(ownPosts);
-        usersRepository.save(byId);
         return save;
     }
 
@@ -91,12 +87,26 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @Transactional
     public void deletePost(Integer id) {
+        List<Users> allUsers = usersRepository.findAll();
+
+        for (Users user : allUsers) {
+            List<Integer> likedPostIds = user.getLikedPosts();
+            if (likedPostIds != null && likedPostIds.removeIf(postId -> postId.equals(id))) {
+                usersRepository.save(user);
+            }
+        }
         postRepository.deleteById(id);
     }
 
+
     public Page<Post> findPosts(Specification<Post> spec, Pageable pageable) {
         return postRepository.findAll(spec, pageable);
+    }
+
+    public List<Post> getUsers(Integer id) {
+        return postRepository.findAllByAuthor_Id(id);
     }
 }
 

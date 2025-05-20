@@ -14,6 +14,8 @@ import uz.pdp.uybozor.repo.AttachmentRepository;
 import uz.pdp.uybozor.servises.JwtService;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/file")
@@ -44,6 +46,31 @@ public class AttachmentController {
 
      return attachment.getId();
      }
+    @PostMapping("/many")
+    public List<Integer> uploadFiles(@RequestParam("files") List<MultipartFile> files) throws IOException {
+        List<Integer> attachmentIds = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            if (file.isEmpty()) {
+                continue;
+            }
+
+            Attachment attachment = Attachment.builder()
+                    .fileName(file.getOriginalFilename())
+                    .build();
+            attachmentRepository.save(attachment);
+
+            AttachmentContent attachmentContent = AttachmentContent.builder()
+                    .attachment(attachment)
+                    .content(file.getBytes())
+                    .build();
+            attachmentContentRepository.save(attachmentContent);
+
+            attachmentIds.add(attachment.getId());
+        }
+
+        return attachmentIds;
+    }
 
     @GetMapping("/{attachmentId}")
     public void getFile(@PathVariable Integer attachmentId, HttpServletResponse response) throws IOException {

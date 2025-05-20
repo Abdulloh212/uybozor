@@ -27,6 +27,12 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(dto));
     }
 
+    @GetMapping("/user/{id}")
+    public ResponseEntity<?> getUser(@PathVariable Integer id) {
+        return ResponseEntity.ok(postService.getUsers(id));
+    }
+
+
     @GetMapping()
     public ResponseEntity<?> getPosts(
             @RequestParam(required = false) String title,

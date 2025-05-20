@@ -1,5 +1,6 @@
 package uz.pdp.uybozor.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,27 +18,23 @@ import java.util.List;
 @Entity
 public class Users extends BaseEntity implements UserDetails {
       private String nickname;
+      @JsonIgnore
       private String password;
       private String telephone;
       private String email;
-      @OneToMany
-      private List<Post>likedPosts;
-      @OneToMany(cascade = CascadeType.ALL)
-      private List<Post>OwnPosts;
+      @ElementCollection
+      private List<Integer> likedPosts;
       @ManyToOne
       private Attachment photo;
       @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
       private List<Role>roles;
-
-
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+      @Override
+      public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.roles;
     }
 
-    @Override
-    public String getUsername() {
+      @Override
+      public String getUsername() {
         return email;
     }
 }

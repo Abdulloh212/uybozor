@@ -16,6 +16,5 @@ public class UserDTO {
      String telephone;
      String email;
      List<Integer> likedPosts;
-     List<Integer>OwnPosts;
      Integer photo;
 }
