@@ -3,10 +3,7 @@ package uz.pdp.uybozor.controllers;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import uz.pdp.uybozor.DTO.UserDTO;
 import uz.pdp.uybozor.entities.Post;
 import uz.pdp.uybozor.entities.Users;
@@ -55,20 +52,23 @@ public class UserController {
     }
 
     @GetMapping("/id")
-    public HttpEntity<?> get(@RequestBody Integer id) {
-        Users users = usersRepository.findById(id).get();
+    public HttpEntity<?> get(@RequestParam Integer userId) {
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
         List<Integer> liked = new ArrayList<>();
-        for (Integer likedPost : users.getLikedPosts()) {
-            liked.add(likedPost);
+        if (user.getLikedPosts() != null) {
+            for (Integer likedPost : user.getLikedPosts()) {
+                liked.add(likedPost);
+            }
         }
         UserDTO userDTO = new UserDTO(
-                users.getId(),
-                users.getNickname(),
-                users.getTelephone(),
-                users.getEmail(),
+                user.getId(),
+                user.getNickname(),
+                user.getTelephone(),
+                user.getEmail(),
                 liked,
-                users.getPhoto().getId()
+                user.getPhoto() != null ? user.getPhoto().getId() : null
         );
         return ResponseEntity.ok(userDTO);
-}
+    }
 }

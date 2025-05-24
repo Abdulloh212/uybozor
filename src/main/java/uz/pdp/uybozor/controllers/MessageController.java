@@ -2,9 +2,15 @@ package uz.pdp.uybozor.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.uybozor.DTO.MessageDTO;
+import uz.pdp.uybozor.DTO.User2DTO;
+import uz.pdp.uybozor.DTO.UserDTO;
 import uz.pdp.uybozor.entities.Message;
+import uz.pdp.uybozor.entities.Users;
+import uz.pdp.uybozor.repo.UsersRepository;
 import uz.pdp.uybozor.servises.MessageService;
 
 import java.util.List;
@@ -15,6 +21,7 @@ import java.util.List;
 public class MessageController {
 
     private final MessageService messageService;
+    private final UsersRepository usersRepository;
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody MessageDTO dto) {
@@ -45,6 +52,11 @@ public class MessageController {
     public ResponseEntity<?> getFromTo(@PathVariable Integer from, @PathVariable Integer to) {
         List<Message> messages = messageService.getMessagesBetween(from, to);
         return ResponseEntity.ok(messages);
+    }
+    @GetMapping("/users/{currentUserId}")
+    public ResponseEntity<?> getUsersWithMessages(@PathVariable Integer currentUserId) {
+        List<User2DTO> users = messageService.getUsersWithMessages(currentUserId);
+        return ResponseEntity.ok(users);
     }
 }
 

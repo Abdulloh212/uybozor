@@ -8,4 +8,5 @@ import java.util.List;
 public interface MessageRepository extends JpaRepository<Message, Integer> {
     List<Message> findByFromIdAndToIdOrFromIdAndToId(Integer from1, Integer to1, Integer from2, Integer to2);
 
+    List<Message> findByFromIdOrToId(Integer currentUserId, Integer currentUserId1);
 }

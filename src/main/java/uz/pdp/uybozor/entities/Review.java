@@ -1,5 +1,6 @@
 package uz.pdp.uybozor.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
@@ -18,6 +19,7 @@ public class Review extends BaseEntity {
     private String message;
     @ManyToOne
     private Users from;
+    @JsonIgnore
     @ManyToOne
     private Post post;
     private Date date=new Date();

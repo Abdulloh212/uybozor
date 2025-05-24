@@ -33,8 +33,12 @@ public class ReviewService {
         review.setFrom(from);
         review.setPost(post);
         review.setDate(new Date());
-
-        return reviewRepository.save(review);
+        Review save = reviewRepository.save(review);
+        List<Review> reviews = post.getReviews();
+        reviews.add(save);
+        post.setReviews(reviews);
+        postRepository.save(post);
+        return save;
     }
 
     public List<Review> getAllReviews() {

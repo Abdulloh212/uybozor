@@ -47,6 +47,8 @@ public class SecurityConfig {
                                 "/api/verify-code",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                         ).permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/report").permitAll()
+                                .requestMatchers("/api/report/**", "/api/report").hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/user/**",
                                 "/api/user",
@@ -57,8 +59,9 @@ public class SecurityConfig {
                                 "/api/unlike",
                                 "/api/file/many",
                                 "/api/review/**",
-                                "/api/message/**",
-                                "/api/report/**",
+                                "/api/review",
+                                "/api/messages/**",
+                                "/api/messages",
                                 "/api/category",
                                 "/api/status",
                                 "/api/location"

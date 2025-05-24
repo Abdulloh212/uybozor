@@ -1,28 +1,55 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Post Tafsiloti</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        .chat-box {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
+        #photoSlider {
+            position: relative;
+            height: 400px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #photoSlider img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+        #photoSlider img.active {
+            display: block;
+        }
+        .btn-prev, .btn-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            padding: 0 15px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            z-index: 5;
+            border-radius: 5px;
+        }
+        .btn-prev { left: 10px; }
+        .btn-next { right: 10px; }
+
+        .chat-message {
+            background-color: #f8f9fa;
             padding: 10px;
             border-radius: 10px;
             margin-bottom: 10px;
         }
-        .chat-message {
-            margin-bottom: 8px;
-        }
         .chat-time {
-            font-size: 0.75rem;
-            color: gray;
+            font-size: 0.8rem;
+            color: #6c757d;
         }
     </style>
 </head>
@@ -31,116 +58,236 @@
     <div id="postContainer"></div>
 </div>
 
-<!-- Qo‘ng‘iroq modal -->
-<div class="modal fade" id="callModal" tabindex="-1">
+<!-- Call Modal -->
+<div class="modal fade" id="callModal" tabindex="-1" aria-labelledby="callModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Aloqa raqami</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="callModalLabel">Aloqa raqami</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Yopish"></button>
             </div>
             <div class="modal-body" id="callPhone"></div>
         </div>
     </div>
 </div>
 
-<script>
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = urlParams.get('id');
-
-    const loadPostDetails = async () => {
-        try {
-            const { data: post } = await axios.get(`http://localhost:8080/api/post/${postId}`);
-
-            let photos = post.photos.map(photoId => `<img src="http://localhost:8080/api/file/${photoId}" class="img-fluid mb-2">`).join('');
-            let mapHtml = `<div id="map" style="height: 300px;"></div>`;
-
-            document.getElementById('postContainer').innerHTML = `
-            <div class="card">
-                <div class="card-body">
-                    <h3>${post.title}</h3>
-                    <div class="row">
-                        <div class="col-md-6">${photos}</div>
-                        <div class="col-md-6">
-                            <p><strong>Narxi:</strong> ${post.sum}</p>
-                            <p><strong>Status:</strong> ${post.status.toString()}</p>
-                            <p><strong>Hudud:</strong> ${post.locationOnTxt}</p>
-                            <p><strong>Kategoriya:</strong> ${post.category.toString()}</p>
-                            <p><strong>Tavsif:</strong> ${post.description}</p>
-                            <p><strong>Muallif:</strong> ${post.author.nickname}</p>
-                            <button class="btn btn-success me-2" id="messageBtn">Yozish</button>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#callModal" onclick="document.getElementById('callPhone').innerText='${post.author.phoneNumber}'">Qo‘ng‘iroq qilish</button>
-                        </div>
-                    </div>
-                    <div class="mt-4">${mapHtml}</div>
-                    <div class="mt-4">
-                        <h5>Sharhlar</h5>
-                        <div class="chat-box" id="reviewList"></div>
-                        <div class="input-group">
-                            <input type="text" id="reviewInput" class="form-control" placeholder="Sharh yozing...">
-                            <button class="btn btn-primary" id="sendReviewBtn">Yuborish</button>
-                        </div>
-                    </div>
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportModalLabel">Shikoyat yuborish</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Yopish"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="reportInput" class="form-label">Shikoyat matni:</label>
+                    <textarea class="form-control" id="reportInput" rows="4" placeholder="Shikoyatingizni yozing..."></textarea>
                 </div>
             </div>
-        `;
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Yopish</button>
+                <button type="button" class="btn btn-danger" id="sendReportBtn">Shikoyat yuborish</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-            // Xarita
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    const token = localStorage.getItem('token');
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+    let currentUserId = null;
+
+    async function fetchUserData() {
+        try {
+            const { data } = await axios.get('http://localhost:8080/api/user', {
+                headers: { 'Authorization': token }
+            });
+            currentUserId = data.id;
+        } catch (e) {
+            console.error("Foydalanuvchini olishda xato:", e);
+        }
+    }
+
+    async function fetchPhotoUrl(photoId) {
+        try {
+            const response = await axios.get(`http://localhost:8080/api/file/${photoId}`, {
+                responseType: 'blob',
+                headers: { 'Authorization': token }
+            });
+            return URL.createObjectURL(response.data);
+        } catch (err) {
+            console.error("Rasm yuklanmadi:", err);
+            return "/default-photo.png";
+        }
+    }
+
+    async function loadPostDetails() {
+        try {
+            const { data: post } = await axios.get(`http://localhost:8080/api/post/${postId}`, {
+                headers: { 'Authorization': token }
+            });
+
+            // Rasm slayder
+            const photoUrls = post.photos?.length
+                ? await Promise.all(post.photos.map(p => fetchPhotoUrl(p.id)))
+                : ["/default-photo.png"];
+
+            const sliderHtml = `
+                <div id="photoSlider">
+                    ${photoUrls.map((url, i) =>
+                `<img src="${url}" class="${i === 0 ? 'active' : ''}" alt="Rasm ${i + 1}">`
+            ).join('')}
+                    <button class="btn-prev">‹</button>
+                    <button class="btn-next">›</button>
+                </div>`;
+
+            document.getElementById('postContainer').innerHTML = `
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3>${post.title || 'Sarlavhasiz'}</h3>
+                        <div class="row">
+                            <div class="col-md-6">${sliderHtml}</div>
+                            <div class="col-md-6">
+                                <p><strong>Narxi:</strong> ${post.sum || '—'} so'm</p>
+                                <p><strong>Status:</strong> ${post.status || '—'}</p>
+                                <p><strong>Hudud:</strong> ${post.locationOnTxt || '—'}</p>
+                                <p><strong>Kategoriya:</strong> ${post.category || '—'}</p>
+                                <p><strong>Tavsif:</strong> ${post.description || '—'}</p>
+                                <p><strong>Muallif:</strong> ${post.author?.nickname || '—'}</p>
+                                ${currentUserId !== post.author?.id ? `
+                                    <button id="messageBtn" class="btn btn-success me-2">Yozish</button>
+                                ` : ''}
+                                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#callModal"
+                                    onclick="document.getElementById('callPhone').innerText='${post.author?.telephone || '—'}'">
+                                    Qo‘ng‘iroq qilish
+                                </button>
+                                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reportModal">
+                                    Shikoyat qilish
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-4" id="map" style="height: 300px;"></div>
+
+                        <div class="mt-4">
+                            <h5>Sharhlar</h5>
+                            <div id="reviewList" class="mb-3"></div>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="reviewInput" placeholder="Sharh yozing...">
+                                <button class="btn btn-primary" id="sendReviewBtn">Yuborish</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Slayder tugmalari
+            const imgs = document.querySelectorAll('#photoSlider img');
+            let currentIndex = 0;
+            document.querySelector('.btn-prev').onclick = () => {
+                imgs[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex === 0) ? imgs.length - 1 : currentIndex - 1;
+                imgs[currentIndex].classList.add('active');
+            };
+            document.querySelector('.btn-next').onclick = () => {
+                imgs[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % imgs.length;
+                imgs[currentIndex].classList.add('active');
+            };
+
+            // Xaritani ko‘rsatish
             const map = L.map('map').setView([post.location.latitude, post.location.longitude], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(map);
-            L.marker([post.location.latitude, post.location.longitude]).addTo(map)
-                .bindPopup(post.locationOnTxt).openPopup();
+            L.marker([post.location.latitude, post.location.longitude])
+                .addTo(map)
+                .bindPopup(post.locationOnTxt)
+                .openPopup();
 
             // Sharhlar
-            let reviews = post.reviews.map(r => `
-            <div class="chat-message">
-                <strong>${r.user.nickname}</strong>: ${r.text}<br>
-                <span class="chat-time">${new Date(r.createdAt).toLocaleString()}</span>
-            </div>
-        `).join('');
-            document.getElementById('reviewList').innerHTML = reviews;
+            const reviewList = document.getElementById('reviewList');
+            reviewList.innerHTML = post.reviews?.length
+                ? post.reviews.map(r => `
+                    <div class="chat-message">
+                        <strong>${r.from.nickname || 'Noma\'lum'}:</strong> ${r.message}
+                        <div class="chat-time">${new Date(r.createdAt).toLocaleString()}</div>
+                    </div>
+                `).join('')
+                : '<p>Sharhlar mavjud emas.</p>';
+
+            if (currentUserId !== post.author?.id) {
+                document.getElementById('messageBtn').onclick = () => {
+                    if (post.author?.id) {
+                        window.location.href = `chat.html?authorId=${post.author.id}`;
+                    } else {
+                        alert('Muallif topilmadi');
+                    }
+                };
+            }
+
+            // Report button handler
+            document.getElementById('sendReportBtn').onclick = async () => {
+                const message = document.getElementById('reportInput').value.trim();
+                if (!message) {
+                    alert("Shikoyat matnini kiriting!");
+                    return;
+                }
+                try {
+                    await axios.post('http://localhost:8080/api/report', {
+                        reportedUserId: post.author?.id,
+                        postId: postId,
+                        message: message,
+                        reportedById: currentUserId
+                    }, {
+                        headers: { 'Authorization': token }
+                    });
+                    document.getElementById('reportInput').value = '';
+                    document.getElementById('reportModal').querySelector('.btn-close').click();
+                    alert("Shikoyat muvaffaqiyatli yuborildi!");
+                } catch (err) {
+                    alert("Shikoyat yuborilmadi.");
+                    console.error("Shikoyat yuborishda xato:", err);
+                }
+            };
 
         } catch (err) {
-            console.error('Postni olishda xato:', err);
+            console.error("Postni yuklashda xato:", err);
+            document.getElementById('postContainer').innerHTML =
+                `<div class="alert alert-danger">Postni yuklashda xato yuz berdi.</div>`;
         }
-    };
+    }
 
-    loadPostDetails();
-
-    // Yozish tugmasi
-    document.addEventListener('click', function (e) {
-        if (e.target.id === 'messageBtn') {
-            alert("Tez orada...");
-        }
+    document.addEventListener('DOMContentLoaded', async () => {
+        await fetchUserData();
+        loadPostDetails();
     });
 
-    // Sharh yuborish
-    document.addEventListener('click', async function (e) {
+    document.addEventListener('click', async (e) => {
         if (e.target.id === 'sendReviewBtn') {
-            const input = document.getElementById('reviewInput');
-            const text = input.value.trim();
-            if (!text) return alert('Iltimos, sharh yozing.');
-
+            const text = document.getElementById('reviewInput').value.trim();
+            if (!text) return alert("Sharh yozing!");
             try {
-                await axios.post(`http://localhost:8080/api/review`, {
-                    text,
-                    postId
+                await axios.post('http://localhost:8080/api/review', {
+                    fromUserId: currentUserId,
+                    postId,
+                    message: text
                 }, {
                     headers: { 'Authorization': token }
                 });
-
-                input.value = '';
-                await loadPostDetails();
+                document.getElementById('reviewInput').value = '';
+                loadPostDetails();
             } catch (err) {
-                alert('Sharh yuborishda xato.');
+                alert("Sharh yuborilmadi.");
+                console.error(err);
             }
         }
     });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
