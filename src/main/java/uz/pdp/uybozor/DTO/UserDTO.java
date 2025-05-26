@@ -6,6 +6,7 @@ import jakarta.persistence.OneToMany;
 import lombok.Value;
 import uz.pdp.uybozor.entities.Attachment;
 import uz.pdp.uybozor.entities.Post;
+import uz.pdp.uybozor.entities.Role;
 
 import java.util.List;
 
@@ -17,4 +18,5 @@ public class UserDTO {
      String email;
      List<Integer> likedPosts;
      Integer photo;
+     List<Role>roles;
 }

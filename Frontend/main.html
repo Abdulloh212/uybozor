@@ -118,6 +118,11 @@
         .like-button.liked {
             color: red;
         }
+        .admin-button {
+            margin-left: 10px;
+            font-size: 0.9rem;
+            padding: 5px 10px;
+        }
         @media (max-width: 768px) {
             #sidebar {
                 transform: translateX(-250px);
@@ -164,7 +169,10 @@
         <nav class="navbar navbar-white bg-white px-3 py-2 d-flex justify-content-between align-items-center">
             <button class="btn btn-outline-primary" id="menu-toggle">☰</button>
             <input type="text" class="form-control search-bar mx-3" placeholder="🔍 Qidirish..." id="search-input">
-            <img id="user-photo" src="/default-photo.png" alt="Foydalanuvchi rasmi">
+            <div class="d-flex align-items-center">
+                <img id="user-photo" src="/default-photo.png" alt="Foydalanuvchi rasmi">
+                <button id="admin-button" class="btn btn-primary admin-button d-none">Admin Panel</button>
+            </div>
         </nav>
 
         <div class="container-fluid mt-4">
@@ -188,13 +196,14 @@
 
     const token = localStorage.getItem('token');
     const userPhoto = document.getElementById('user-photo');
+    const adminButton = document.getElementById('admin-button');
     let userData = null;
     let likedPostIds = [];
 
     async function fetchUserData() {
         try {
             const response = await axios.get('http://localhost:8080/api/user', {
-                headers: {'Authorization': token}
+                headers: { 'Authorization': token }
             });
             return response.data;
         } catch (error) {
@@ -208,7 +217,7 @@
             try {
                 const response = await axios.get(`http://localhost:8080/api/file/${userData.photo}`, {
                     responseType: 'blob',
-                    headers: {'Authorization': token}
+                    headers: { 'Authorization': token }
                 });
                 const imageUrl = URL.createObjectURL(response.data);
                 userPhoto.src = imageUrl;
@@ -233,7 +242,7 @@
         try {
             const response = await axios.get('http://localhost:8080/api/getLiked', {
                 params: { userId: userData.id },
-                headers: {'Authorization': token}
+                headers: { 'Authorization': token }
             });
             return response.data || [];
         } catch (error) {
@@ -250,25 +259,49 @@
         }
         userData = await fetchUserData();
         if (userData) {
+            console.log('userData:', userData); // Debug: Log userData to inspect structure
+            console.log('userData.roles:', userData.roles); // Debug: Log roles to inspect
             await loadUserPhoto();
             setUserIdInSidebar();
             likedPostIds = await fetchLikedPosts();
+            // Check if user has ROLE_ADMIN in the roles list
+            if (userData.roles && Array.isArray(userData.roles) && userData.roles.some(role => {
+                const roleName = role.roleName ? role.roleName.toString() : '';
+                console.log('Checking role:', role, 'roleName:', roleName); // Debug: Log each role
+                return roleName === 'ROLE_ADMIN';
+            })) {
+                console.log('ROLE_ADMIN found, showing admin button'); // Debug: Confirm ROLE_ADMIN found
+                adminButton.classList.remove('d-none');
+                adminButton.addEventListener('click', () => {
+                    window.location.href = 'admin.html';
+                });
+            } else {
+                console.log('ROLE_ADMIN not found or roles is not an array'); // Debug: Role not found
+            }
+        } else {
+            console.log('userData is null or undefined'); // Debug: No user data
         }
     }
 
     let posts = [];
     let currentPage = 1;
-    const pageSize = 12;
+    const pageSize = 12; // Har sahifada 12 ta post
 
-    async function fetchPosts() {
+    async function fetchPosts(page = 0, size = pageSize, filters = {}) {
         try {
             const response = await axios.get('http://localhost:8080/api/post', {
-                headers: {'Authorization': token}
+                headers: { 'Authorization': token },
+                params: { page, size, ...filters }
             });
-            return response.data.content || [];
+            console.log('Backend javobi:', response.data);
+            return {
+                content: response.data.content || [],
+                totalPages: response.data.totalPages || 1,
+                totalElements: response.data.totalElements || 0
+            };
         } catch (error) {
             console.error('Postlarni olishda xato:', error);
-            return [];
+            return { content: [], totalPages: 1, totalElements: 0 };
         }
     }
 
@@ -317,13 +350,13 @@
         const cardBody = document.createElement('div');
         cardBody.className = 'card-body';
         cardBody.innerHTML = `
-            <h5 class="card-title">${post.title || 'Sarlavha yo‘q'}</h5>
-            <p class="card-text mb-1"><strong>Muallif:</strong> ${post.author?.nickname || 'Noma\'lum'}</p>
-            <p class="card-text mb-1"><strong>Narx:</strong> ${post.sum || '—'}</p>
-            <p class="card-text mb-1"><strong>Manzil:</strong> ${post.locationOnTxt || 'Noma\'lum'}</p>
-            <p class="card-text mb-1"><strong>Sana:</strong> ${post.date ? post.date.substring(0, 10) : '—'}</p>
-            <p class="card-text"><strong>Kategoriya:</strong> ${post.category || '—'} | <strong>Holati:</strong> ${post.status || '—'}</p>
-        `;
+        <h5 class="card-title">${post.title || 'Sarlavha yo‘q'}</h5>
+        <p class="card-text mb-1"><strong>Muallif:</strong> ${post.author?.nickname || 'Noma\'lum'}</p>
+        <p class="card-text mb-1"><strong>Narx:</strong> ${post.sum || '—'}</p>
+        <p class="card-text mb-1"><strong>Manzil:</strong> ${post.locationOnTxt || 'Noma\'lum'}</p>
+        <p class="card-text mb-1"><strong>Sana:</strong> ${post.date ? post.date.substring(0, 10) : '—'}</p>
+        < spiralsnakeskin.org        <p class="card-text"><strong>Kategoriya:</strong> ${post.category || '—'} | <strong>Holati:</strong> ${post.status || '—'}</p>
+    `;
 
         const isLiked = likedPostIds.includes(post.id);
         const likeButton = document.createElement('i');
@@ -382,26 +415,24 @@
 
     async function renderPostsPage(page) {
         currentPage = page;
-        const start = (page - 1) * pageSize;
-        const end = start + pageSize;
-        const pagePosts = posts.slice(start, end);
+        const postsData = await fetchPosts(page - 1, pageSize); // Backend sahifasi 0 dan boshlanadi
+        posts = postsData.content;
+        const totalPages = postsData.totalPages;
 
         const postsRow = document.getElementById('posts-row');
         postsRow.innerHTML = '';
 
-        for (const post of pagePosts) {
+        for (const post of posts) {
             const card = await createPostCard(post);
             postsRow.appendChild(card);
         }
 
-        renderPagination();
+        renderPagination(totalPages);
     }
 
-    function renderPagination() {
+    function renderPagination(totalPages) {
         const pagination = document.getElementById('pagination');
         pagination.innerHTML = '';
-
-        const totalPages = Math.ceil(posts.length / pageSize);
 
         const prevLi = document.createElement('li');
         prevLi.className = 'page-item' + (currentPage === 1 ? ' disabled' : '');
@@ -446,13 +477,16 @@
     }
 
     const searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('input', () => {
+    searchInput.addEventListener('input', async () => {
         const filter = searchInput.value.trim().toLowerCase();
         if (filter === '') {
+            const postsData = await fetchPosts(0, pageSize);
+            posts = postsData.content;
             renderPostsPage(1);
         } else {
-            const filteredPosts = posts.filter(post => (post.title || '').toLowerCase().includes(filter));
-            renderFilteredPosts(filteredPosts);
+            const postsData = await fetchPosts(0, pageSize, { title: filter });
+            posts = postsData.content;
+            renderFilteredPosts(posts);
         }
     });
 
@@ -465,7 +499,7 @@
             postsRow.appendChild(card);
         }
 
-        document.getElementById('pagination').innerHTML = '';
+        document.getElementById('pagination').innerHTML = ''; // Filtrlashda pagination o‘chiriladi
     }
 
     async function init() {
@@ -475,7 +509,9 @@
         }
 
         await initializeUser();
-        posts = await fetchPosts();
+        const postsData = await fetchPosts(0, pageSize);
+        posts = postsData.content;
+        console.log('Postlar soni:', posts.length, 'Jami sahifalar:', postsData.totalPages);
         if (posts.length === 0) {
             document.getElementById('posts-row').innerHTML = '<p class="text-center">Hozircha postlar yo‘q.</p>';
             return;

@@ -82,7 +82,8 @@ public class PostService {
         post.setLocationOnTxt(dto.getLocation());
         post.setDescription(dto.getDescription());
         post.setCategory(dto.getCategory());
-        post.setStatus(dto.getStatus());
+        post.setLocationOnTxt(dto.getLocation());
+        post.setStatus(Status.ACTIVE);
 
         return postRepository.save(post);
     }

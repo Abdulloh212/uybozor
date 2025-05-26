@@ -36,14 +36,14 @@ public class UserController {
                 liked.add(likedPost);
             }
             }
-            List<Integer> own = new ArrayList<>();
             UserDTO userDTO = new UserDTO(
                     usernameFromToken.getId(),
                     usernameFromToken.getNickname(),
                     usernameFromToken.getTelephone(),
                     usernameFromToken.getEmail(),
                     liked,
-                    usernameFromToken.getPhoto().getId()
+                    usernameFromToken.getPhoto().getId(),
+                    usernameFromToken.getRoles()
             );
             return ResponseEntity.ok(userDTO);
         } else {
@@ -67,7 +67,7 @@ public class UserController {
                 user.getTelephone(),
                 user.getEmail(),
                 liked,
-                user.getPhoto() != null ? user.getPhoto().getId() : null
+                user.getPhoto() != null ? user.getPhoto().getId() : null,user.getRoles()
         );
         return ResponseEntity.ok(userDTO);
     }

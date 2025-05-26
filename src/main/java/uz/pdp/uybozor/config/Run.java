@@ -51,24 +51,8 @@ public class Run implements CommandLineRunner {
             user.setNickname("Abdulloh");
             user.setPhoto(attachment);
             user.setRoles(List.of(role1, role2));
-            Users users1 = new Users();
-            users1.setEmail("admin@gmail.com");
-            users1.setPassword(passwordEncoder.encode("123123"));
-            users1.setTelephone("994095956");
-            users1.setNickname("Abdulloh");
-            users1.setPhoto(attachment);
-            users1.setRoles(List.of(role1, role2));
-            Users user2= new Users();
-            user2.setEmail("masturabonu@gmail.com");
-            user2.setPassword(passwordEncoder.encode("123123"));
-            user2.setTelephone("994095956");
-            user2.setNickname("Abdulloh");
-            user2.setPhoto(attachment);
-            user2.setRoles(List.of(role1, role2));
 
             usersRepository.save(user);
-            usersRepository.save(user2);
-            usersRepository.save(users1);
         }
     }
 }
